@@ -16,7 +16,8 @@ ROOT=os.path.dirname(HERE)
 FLOOR=10
 AH={"85044","85045","85048"}
 SERVICE={"Gilbert","Mesa","Tempe","Chandler","Queen Creek","San Tan Valley",
-         "Scottsdale","Phoenix","Fountain Hills","Paradise Valley","Apache Junction","Gold Canyon"}
+         "Scottsdale","Phoenix","Fountain Hills","Paradise Valley","Apache Junction","Gold Canyon",
+         "Maricopa","Glendale"}
 ADDR=re.compile(r',\s*([^,]+?),\s*AZ\s+(\d{5})',re.I)
 def norm(s):
     s=(s or "").lower().strip(); s=re.sub(r'[*].*$','',s); s=re.sub(r'\s+',' ',s); return re.sub(r'[^a-z ]','',s).strip()

@@ -81,3 +81,7 @@ City slugs:
 Auto-detect fallback: if no parameter is given, the map tries to infer the city from the
 parent landing-page URL (e.g. a page at `/queen-creek/`). This is best-effort (referrer can
 be blank), so prefer the explicit `?city=` for reliability.
+
+### Added cities (v2)
+`maricopa` and `glendale` are now included, so all 14 location-page slugs resolve.
+Full slug list is the lowercase city name with spaces as hyphens.
