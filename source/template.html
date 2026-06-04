@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>Same Day Garage Door — Service Area</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#141414;--muted:#6b675e;--gold:#E9A23B;
+ --c1:#FAEAD0;--c2:#F3C77B;--c3:#E99B43;--c4:#D9702A;--c5:#A8430F;
+ --legpad:11px 13px;--legtitle:10.5px;--legrow:11.5px;--sw-w:20px;--sw-h:12px;
+ --pp-w:280px;--pp-big:19px;--pp-loc:12px;--pp-rate:13px;--pp-quote:12.5px;--pp-auth:11.5px;}
+html,body{margin:0;height:100%}
+#map{height:100vh;width:100%;font-family:"Lexend",sans-serif;background:#F6F1E7}
+.legend{background:#fff;padding:var(--legpad);border-radius:12px;box-shadow:0 2px 14px rgba(0,0,0,.12);font-family:"Lexend",sans-serif;line-height:1.4}
+.legend .lt{font-size:var(--legtitle);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:7px}
+.legend .lr{display:flex;align-items:center;gap:8px;font-size:var(--legrow);color:var(--ink);margin:3px 0}
+.legend .sw{width:var(--sw-w);height:var(--sw-h);border-radius:3px;border:1px solid rgba(0,0,0,.12);flex:none}
+.leaflet-tooltip.zt{background:#141414;color:#fff;border:0;border-radius:8px;font-family:"Lexend",sans-serif;font-size:12.5px;padding:7px 10px;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.leaflet-tooltip.zt b{font-size:14px}.leaflet-tooltip.zt:before{display:none}
+.leaflet-popup-content-wrapper{border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.18)}
+.leaflet-popup-content{margin:14px 16px;font-family:"Lexend",sans-serif;width:auto!important}
+.pp .big{font-size:var(--pp-big);font-weight:700;color:var(--ink);line-height:1.1}
+.pp .loc{font-size:var(--pp-loc);color:var(--muted);margin:3px 0 0}
+.pp .rev{margin-top:11px;padding-top:11px;border-top:1px solid #ece7db}
+.pp .rate{font-size:var(--pp-rate);font-weight:600;color:var(--ink)}
+.pp .stars{color:var(--gold);letter-spacing:1px}
+.pp .quote{font-size:var(--pp-quote);color:#33312c;line-height:1.45;margin:6px 0 0;font-style:italic}
+.pp .auth{font-size:var(--pp-auth);color:var(--muted);margin-top:4px}
+
+/* ---- responsive breakpoints: 1440 / 810 / 375 ---- */
+@media (max-width:1440px){
+  :root{--pp-w:260px;--legrow:11px;}
+}
+@media (max-width:810px){          /* tablet */
+  :root{--legpad:9px 11px;--legtitle:9.5px;--legrow:10.5px;--sw-w:18px;--sw-h:11px;
+        --pp-w:240px;--pp-big:17px;--pp-quote:12px;--pp-rate:12.5px;}
+  .leaflet-control-zoom{transform:scale(.92);transform-origin:bottom right}
+}
+@media (max-width:375px){          /* mobile */
+  :root{--legpad:7px 9px;--legtitle:9px;--legrow:9.5px;--sw-w:15px;--sw-h:10px;
+        --pp-w:200px;--pp-big:15.5px;--pp-loc:11px;--pp-rate:11.5px;--pp-quote:11px;--pp-auth:10.5px;}
+  .leaflet-popup-content{margin:11px 12px}
+  .leaflet-control-zoom{transform:scale(.85);transform-origin:bottom right}
+  .legend .lt{margin-bottom:5px}
+}
+</style></head>
+<body>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const GEO=__GEO__, BREAKS=__BREAKS__, REVIEWS=__REVIEWS__;
+const COLORS=['#FAEAD0','#F3C77B','#E99B43','#D9702A','#A8430F'];
+const color=c=>c>=BREAKS[4]?COLORS[4]:c>=BREAKS[3]?COLORS[3]:c>=BREAKS[2]?COLORS[2]:c>=BREAKS[1]?COLORS[1]:COLORS[0];
+const stars=a=>{const f=Math.round(a);return '\u2605'.repeat(f)+'\u2606'.repeat(5-f);};
+
+const map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([33.45,-111.85],10);
+L.control.zoom({position:'bottomright'});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:18}).addTo(map);
+
+const style=f=>({fillColor:color(f.properties.count),weight:1,color:'#6b5e45',opacity:.7,fillOpacity:.8});
+function ppHTML(p){
+  const r=REVIEWS[p.zip]||{};
+  let pw=getComputedStyle(document.documentElement).getPropertyValue('--pp-w').trim();
+  let h=`<div class="pp" style="width:${pw}"><div class="big">${p.count.toLocaleString()} Homeowners Helped</div>`+
+        `<div class="loc">${p.city} &middot; ${p.zip}</div>`;
+  if(r.ccount){h+=`<div class="rev"><div class="rate"><span class="stars">${stars(r.cavg)}</span> ${r.cavg} &middot; ${r.ccount} reviews in ${p.city}</div>`+
+        (r.quote?`<div class="quote">&ldquo;${r.quote}&rdquo;</div><div class="auth">&mdash; ${r.author}, verified customer</div>`:``)+`</div>`;}
+  return h+`</div>`;
+}
+const layer=L.geoJSON(GEO,{style,onEachFeature:(f,l)=>{const p=f.properties;
+  l.on({mouseover:e=>{e.target.setStyle({weight:2.5,color:'#141414',fillOpacity:.92});e.target.bringToFront();},mouseout:e=>layer.resetStyle(e.target)});
+  l.bindTooltip(`<b>${p.count.toLocaleString()} Homeowners Helped</b><br>${p.city} &middot; ${p.zip}`,{className:'zt',sticky:true});
+  l.bindPopup(()=>ppHTML(p),{maxWidth:320});
+}}).addTo(map);
+
+// ---- default focus: ?city=queen-creek | ?zip=85142 | #city=... | auto from parent page slug ----
+const slug=s=>decodeURIComponent(s||'').toLowerCase().trim().replace(/[ _]+/g,'-');
+const params=new URLSearchParams((location.search.slice(1))+'&'+(location.hash.slice(1)));
+function cityBounds(c){const b=L.latLngBounds([]);let any=false;
+  layer.eachLayer(l=>{if(slug(l.feature.properties.city)===c){b.extend(l.getBounds());any=true;}});return any?b:null;}
+function zipBounds(z){let r=null;layer.eachLayer(l=>{if(l.feature.properties.zip===z)r=l.getBounds();});return r;}
+function resolveFocus(){
+  const z=(params.get('zip')||'').trim();
+  if(z){const b=zipBounds(z);if(b)return b;}
+  let c=slug(params.get('city')||params.get('focus')||params.get('area'));
+  if(!c && document.referrer){            // best-effort auto-detect from landing-page slug
+    try{const segs=new URL(document.referrer).pathname.toLowerCase().split('/').filter(Boolean);
+        for(const s of segs){if(cityBounds(slug(s))){c=slug(s);break;}}}catch(e){}
+  }
+  if(c){const b=cityBounds(c);if(b)return b;}
+  return null;
+}
+const focus=resolveFocus();
+
+// ---- responsive framing: re-fit on resize, padding scales with viewport ----
+function pad(){const w=innerWidth;return w<=375?[10,10]:w<=810?[18,18]:[30,30];}
+function frame(){map.invalidateSize();map.fitBounds(focus||layer.getBounds(),{padding:pad()});}
+frame();
+let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(frame,180);});
+
+// ---- optional: ?popup=1 auto-opens the focused area's busiest ZIP ----
+if(focus && params.get('popup')==='1'){
+  let best=null,bc=-1;
+  layer.eachLayer(l=>{if(focus.contains(l.getBounds().getCenter())&&l.feature.properties.count>bc){bc=l.feature.properties.count;best=l;}});
+  if(best) setTimeout(()=>best.openPopup(),350);
+}
+
+const legend=L.control({position:'bottomleft'});
+legend.onAdd=function(){const div=L.DomUtil.create('div','legend');
+  const rg=[[BREAKS[0],BREAKS[1]-1],[BREAKS[1],BREAKS[2]-1],[BREAKS[2],BREAKS[3]-1],[BREAKS[3],BREAKS[4]-1],[BREAKS[4],null]];
+  div.innerHTML='<div class="lt">Homeowners helped per ZIP</div>'+rg.map((r,i)=>`<div class="lr"><span class="sw" style="background:${COLORS[i]}"></span>${r[1]?r[0].toLocaleString()+'\u2013'+r[1].toLocaleString():r[0].toLocaleString()+'+'}</div>`).join('');
+  return div;};
+legend.addTo(map);
+</script></body></html>
