@@ -6,7 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--ink:#141414;--muted:#6b675e;--gold:#E9A23B;
- --c1:#FAEAD0;--c2:#F3C77B;--c3:#E99B43;--c4:#D9702A;--c5:#A8430F;
+ --c1:#FBD68A;--c2:#F4AE48;--c3:#E9852C;--c4:#D2611A;--c5:#A8430F;
  --legpad:11px 13px;--legtitle:10.5px;--legrow:11.5px;--sw-w:20px;--sw-h:12px;
  --pp-w:280px;--pp-big:19px;--pp-loc:12px;--pp-rate:13px;--pp-quote:12.5px;--pp-auth:11.5px;}
 html,body{margin:0;height:100%}
@@ -26,6 +26,12 @@ html,body{margin:0;height:100%}
 .pp .stars{color:var(--gold);letter-spacing:1px}
 .pp .quote{font-size:var(--pp-quote);color:#33312c;line-height:1.45;margin:6px 0 0;font-style:italic}
 .pp .auth{font-size:var(--pp-auth);color:var(--muted);margin-top:4px}
+/* ---- bold city labels on top of the choropleth ---- */
+.citylbl{font-family:"Lexend",sans-serif;font-weight:700;font-size:13px;color:#1a1a1a;
+ background:transparent;border:0;white-space:nowrap;pointer-events:none;
+ text-transform:uppercase;letter-spacing:.03em;transform:translate(-50%,-50%);
+ text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 4px #fff,0 0 9px #fff,0 0 9px #fff;}
+.citylbl.hub{font-size:15.5px;letter-spacing:.05em}
 
 /* ---- responsive breakpoints: 1440 / 810 / 375 ---- */
 @media (max-width:1440px){
@@ -35,6 +41,7 @@ html,body{margin:0;height:100%}
   :root{--legpad:9px 11px;--legtitle:9.5px;--legrow:10.5px;--sw-w:18px;--sw-h:11px;
         --pp-w:240px;--pp-big:17px;--pp-quote:12px;--pp-rate:12.5px;}
   .leaflet-control-zoom{transform:scale(.92);transform-origin:bottom right}
+  .citylbl{font-size:12px}.citylbl.hub{font-size:14px}
 }
 @media (max-width:375px){          /* mobile */
   :root{--legpad:7px 9px;--legtitle:9px;--legrow:9.5px;--sw-w:15px;--sw-h:10px;
@@ -42,6 +49,7 @@ html,body{margin:0;height:100%}
   .leaflet-popup-content{margin:11px 12px}
   .leaflet-control-zoom{transform:scale(.85);transform-origin:bottom right}
   .legend .lt{margin-bottom:5px}
+  .citylbl{font-size:10.5px}.citylbl.hub{font-size:12px}
 }
 </style></head>
 <body>
@@ -49,15 +57,15 @@ html,body{margin:0;height:100%}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const GEO=__GEO__, BREAKS=__BREAKS__, REVIEWS=__REVIEWS__;
-const COLORS=['#FAEAD0','#F3C77B','#E99B43','#D9702A','#A8430F'];
+const COLORS=['#FBD68A','#F4AE48','#E9852C','#D2611A','#A8430F'];
 const color=c=>c>=BREAKS[4]?COLORS[4]:c>=BREAKS[3]?COLORS[3]:c>=BREAKS[2]?COLORS[2]:c>=BREAKS[1]?COLORS[1]:COLORS[0];
 const stars=a=>{const f=Math.round(a);return '\u2605'.repeat(f)+'\u2606'.repeat(5-f);};
 
 const map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([33.45,-111.85],10);
 L.control.zoom({position:'bottomright'});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:18}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:18}).addTo(map);
 
-const style=f=>({fillColor:color(f.properties.count),weight:1,color:'#6b5e45',opacity:.7,fillOpacity:.8});
+const style=f=>({fillColor:color(f.properties.count),weight:1,color:'#8a5a1f',opacity:.6,fillOpacity:.76});
 function ppHTML(p){
   const r=REVIEWS[p.zip]||{};
   let pw=getComputedStyle(document.documentElement).getPropertyValue('--pp-w').trim();
@@ -72,6 +80,17 @@ const layer=L.geoJSON(GEO,{style,onEachFeature:(f,l)=>{const p=f.properties;
   l.bindTooltip(`<b>${p.count.toLocaleString()} Homeowners Helped</b><br>${p.city} &middot; ${p.zip}`,{className:'zt',sticky:true});
   l.bindPopup(()=>ppHTML(p),{maxWidth:320});
 }}).addTo(map);
+
+// ---- bold city labels on top of the choropleth (legibility / accessibility) ----
+map.createPane('labels'); map.getPane('labels').style.zIndex=650; map.getPane('labels').style.pointerEvents='none';
+const _agg={};
+layer.eachLayer(l=>{const p=l.feature.properties;const a=_agg[p.city]||(_agg[p.city]={n:0,la:0,lo:0});a.n+=p.count;a.la+=p.lat*p.count;a.lo+=p.lng*p.count;});
+const cityLabels=Object.entries(_agg).map(([city,a])=>({n:a.n,
+  m:L.marker([a.la/a.n,a.lo/a.n],{pane:'labels',interactive:false,keyboard:false,
+    icon:L.divIcon({className:'citylbl'+(a.n>=4000?' hub':''),html:city,iconSize:null})}).addTo(map)}));
+function updateLabels(){const z=map.getZoom();cityLabels.forEach(o=>{const el=o.m.getElement();if(!el)return;
+  el.style.display=(z>=12?true:z>=10?o.n>=300:o.n>=1500)?'':'none';});}
+map.on('zoomend',updateLabels);
 
 // ---- default focus: ?city=queen-creek | ?zip=85142 | #city=... | auto from parent page slug ----
 const slug=s=>decodeURIComponent(s||'').toLowerCase().trim().replace(/[ _]+/g,'-');
@@ -95,8 +114,8 @@ const focus=resolveFocus();
 // ---- responsive framing: re-fit on resize, padding scales with viewport ----
 function pad(){const w=innerWidth;return w<=375?[10,10]:w<=810?[18,18]:[30,30];}
 function frame(){map.invalidateSize();map.fitBounds(focus||layer.getBounds(),{padding:pad()});}
-frame();
-let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(frame,180);});
+frame();updateLabels();
+let t;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(()=>{frame();updateLabels();},180);});
 
 // ---- optional: ?popup=1 auto-opens the focused area's busiest ZIP ----
 if(focus && params.get('popup')==='1'){

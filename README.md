@@ -85,3 +85,9 @@ be blank), so prefer the explicit `?city=` for reliability.
 ### Added cities (v2)
 `maricopa` and `glendale` are now included, so all 14 location-page slugs resolve.
 Full slug list is the lowercase city name with spaces as hyphens.
+
+### Legibility update (v3)
+City names now render as bold, white-haloed labels on top of the choropleth (basemap
+switched to a label-free style so nothing competes). Labels declutter by zoom: hubs only
+when zoomed out, all cities when zoomed in. Color ramp lightened at the low end for
+visibility on the light basemap.
