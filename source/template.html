@@ -2,9 +2,14 @@
 <html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
 <title>Same Day Garage Door — Service Area</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css"/>
+<link rel="preconnect" href="https://a.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://b.basemaps.cartocdn.com">
+<link rel="preconnect" href="https://c.basemaps.cartocdn.com">
+<link rel="preload" href="fonts/lexend-latin.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:'Lexend';font-style:normal;font-weight:400 700;font-display:swap;src:url(fonts/lexend-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Lexend';font-style:normal;font-weight:400 700;font-display:swap;src:url(fonts/lexend-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
 :root{--ink:#141414;--muted:#6b675e;--gold:#E9A23B;
  --c1:#FBD68A;--c2:#F4AE48;--c3:#E9852C;--c4:#D2611A;--c5:#A8430F;
  --legpad:11px 13px;--legtitle:10.5px;--legrow:11.5px;--sw-w:20px;--sw-h:12px;
@@ -54,16 +59,17 @@ html,body{margin:0;height:100%}
 </style></head>
 <body>
 <div id="map"></div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script defer src="vendor/leaflet/leaflet.js"></script>
 <script>
+addEventListener('DOMContentLoaded',function(){
 const GEO=__GEO__, BREAKS=__BREAKS__, REVIEWS=__REVIEWS__;
 const COLORS=['#FBD68A','#F4AE48','#E9852C','#D2611A','#A8430F'];
 const color=c=>c>=BREAKS[4]?COLORS[4]:c>=BREAKS[3]?COLORS[3]:c>=BREAKS[2]?COLORS[2]:c>=BREAKS[1]?COLORS[1]:COLORS[0];
 const stars=a=>{const f=Math.round(a);return '\u2605'.repeat(f)+'\u2606'.repeat(5-f);};
 
-const map=L.map('map',{zoomControl:true,scrollWheelZoom:false}).setView([33.45,-111.85],10);
+const map=L.map('map',{zoomControl:true,scrollWheelZoom:false,preferCanvas:true}).setView([33.45,-111.85],10);
 L.control.zoom({position:'bottomright'});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:18}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',{attribution:'&copy; OpenStreetMap &copy; CARTO',maxZoom:18,updateWhenZooming:false,keepBuffer:2}).addTo(map);
 
 const style=f=>({fillColor:color(f.properties.count),weight:1,color:'#8a5a1f',opacity:.6,fillOpacity:.76});
 function ppHTML(p){
@@ -130,4 +136,5 @@ legend.onAdd=function(){const div=L.DomUtil.create('div','legend');
   div.innerHTML='<div class="lt">Homeowners helped per ZIP</div>'+rg.map((r,i)=>`<div class="lr"><span class="sw" style="background:${COLORS[i]}"></span>${r[1]?r[0].toLocaleString()+'\u2013'+r[1].toLocaleString():r[0].toLocaleString()+'+'}</div>`).join('');
   return div;};
 legend.addTo(map);
+});
 </script></body></html>
